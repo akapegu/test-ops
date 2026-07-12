@@ -27,17 +27,7 @@ PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_MODEL = PROJECT_ROOT / "models" / "xgb_best_model.pkl"
 DEFAULT_FREQ_ENCODER = PROJECT_ROOT / "models" / "freq_encoder.pkl"
 DEFAULT_TARGET_ENCODER = PROJECT_ROOT / "models" / "target_encoder.pkl"
-TRAIN_FE_PATH = PROJECT_ROOT / "data" / "processed" / "feature_engineered_train.csv"
 DEFAULT_OUTPUT = PROJECT_ROOT / "predictions.csv"
-
-print("📂 Inference using project root:", PROJECT_ROOT)
-
-# Load training feature columns (strict schema from training dataset)
-if TRAIN_FE_PATH.exists():
-    _train_cols = pd.read_csv(TRAIN_FE_PATH, nrows=1)
-    TRAIN_FEATURE_COLUMNS = [c for c in _train_cols.columns if c != "price"]  # excluding price column
-else:
-    TRAIN_FEATURE_COLUMNS = None
 
 
 # ----------------------------
@@ -74,18 +64,22 @@ def predict(
     # Drop leakage columns
     df, _ = drop_unused_columns(df.copy(), df.copy())
 
+    # Backward compat: notebook data used city_encoded, pipeline uses city_full_encoded
+    if "city_encoded" in df.columns and "city_full_encoded" not in df.columns:
+        df["city_full_encoded"] = df.pop("city_encoded")
+
     # Step 4: Separate actuals if present
     y_true = None
     if "price" in df.columns:
         y_true = df["price"].tolist()
         df = df.drop(columns=["price"])
 
-    # Step 5: Align columns with training schema
-    if TRAIN_FEATURE_COLUMNS is not None:
-        df = df.reindex(columns=TRAIN_FEATURE_COLUMNS, fill_value=0)
-
-    # Step 6: Load model & predict
+    # Step 5: Load model & align columns to its training schema
     model = load(model_path)
+    feature_cols = list(model.feature_names_in_)
+    df = df.reindex(columns=feature_cols, fill_value=0)
+
+    # Step 6: Predict
     preds = model.predict(df)
 
     # Step 7: Build output

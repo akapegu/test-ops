@@ -17,7 +17,7 @@ from src.inference_pipeline.inference import predict
 @pytest.fixture(scope="session")
 def sample_df():
     """Load a small sample from cleaning_eval.csv for inference testing."""
-    sample_path = ROOT / "data/processed/feature_engineered_eval.csv"
+    sample_path = ROOT / "data/processed/cleaning_eval.csv"
     df = pd.read_csv(sample_path).sample(5, random_state=42).reset_index(drop=True)
     return df
 

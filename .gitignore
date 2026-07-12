@@ -52,3 +52,5 @@ Thumbs.db
 *.pid
 *.tar
 *.lock.json
+pegu_credentials.csv
+mlflow/

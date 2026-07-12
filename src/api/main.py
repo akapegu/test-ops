@@ -13,11 +13,11 @@ from src.inference_pipeline.inference import predict
 # ----------------------------
 # Config
 # ----------------------------
-S3_BUCKET = os.getenv("S3_BUCKET", "housing-regression-data")
-REGION = os.getenv("AWS_REGION", "eu-west-2")
+S3_BUCKET = os.getenv("S3_BUCKET", "housing-regression-data-pegu")
+REGION = os.getenv("AWS_REGION", "eu-north-1")
 s3 = boto3.client("s3", region_name=REGION)
 
-# Ensures your app always has the latest model/data locally, 
+# Ensures your app always has the latest model/data locally 
 # but avoids re-downloading every time it starts.
 def load_from_s3(key, local_path):
     """Download from S3 if not already cached locally."""
