@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import numpy as np
 import requests
 import plotly.express as px
 import boto3, os
@@ -13,6 +14,21 @@ S3_BUCKET = os.getenv("S3_BUCKET", "housing-regression-data-pegu")
 REGION = os.getenv("AWS_REGION", "eu-north-1")
 
 s3 = boto3.client("s3", region_name=REGION)
+
+
+def prepare_api_payload(df: pd.DataFrame) -> list[dict]:
+    """Build JSON-safe records for the predict API (NaN/Inf are not JSON compliant)."""
+    payload_df = df.drop(columns=["price"], errors="ignore").copy()
+    records = []
+    for row in payload_df.to_dict(orient="records"):
+        clean = {}
+        for key, val in row.items():
+            if isinstance(val, float) and (np.isnan(val) or np.isinf(val)):
+                clean[key] = None
+            else:
+                clean[key] = val
+        records.append(clean)
+    return records
 
 def load_from_s3(key, local_path):
     """Download from S3 if not already cached locally."""
@@ -87,7 +103,7 @@ if st.button("Show Predictions 🚀"):
     else:
         st.write(f"📅 Running predictions for **{year}-{month:02d}** | Region: **{region}**")
 
-        payload = fe_df.loc[idx].to_dict(orient="records")
+        payload = prepare_api_payload(fe_df.loc[idx])
 
         try:
             resp = requests.post(API_URL, json=payload, timeout=60)
@@ -128,7 +144,7 @@ if st.button("Show Predictions 🚀"):
             if region == "All":
                 yearly_data = disp_df[disp_df["year"] == year].copy()
                 idx_all = yearly_data.index
-                payload_all = fe_df.loc[idx_all].to_dict(orient="records")
+                payload_all = prepare_api_payload(fe_df.loc[idx_all])
 
                 resp_all = requests.post(API_URL, json=payload_all, timeout=60)
                 resp_all.raise_for_status()
@@ -139,7 +155,7 @@ if st.button("Show Predictions 🚀"):
             else:
                 yearly_data = disp_df[(disp_df["year"] == year) & (disp_df["region"] == region)].copy()
                 idx_region = yearly_data.index
-                payload_region = fe_df.loc[idx_region].to_dict(orient="records")
+                payload_region = prepare_api_payload(fe_df.loc[idx_region])
 
                 resp_region = requests.post(API_URL, json=payload_region, timeout=60)
                 resp_region.raise_for_status()
