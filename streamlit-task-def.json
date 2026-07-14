@@ -1,8 +1,8 @@
 {
   "family": "housing-streamlit",
   "networkMode": "awsvpc",
-  "executionRoleArn": "arn:aws:iam::261899902410:role/ecsTaskExecutionRole",
-  "taskRoleArn": "arn:aws:iam::261899902410:role/ecs_s3_access",
+  "executionRoleArn": "arn:aws:iam::533850701609:role/ecsTaskExecutionRole",
+  "taskRoleArn": "arn:aws:iam::533850701609:role/ecs_s3_access",
   "requiresCompatibilities": [
     "FARGATE"
   ],
@@ -11,7 +11,7 @@
   "containerDefinitions": [
     {
       "name": "housing-streamlit",
-      "image": "261899902410.dkr.ecr.eu-west-2.amazonaws.com/housing-streamlit:latest",
+      "image": "533850701609.dkr.ecr.eu-north-1.amazonaws.com/housing-streamlit:latest",
       "essential": true,
       "portMappings": [
         {
@@ -37,10 +37,26 @@
           "value": "false"
         },
         {
+          "name": "S3_BUCKET",
+          "value": "housing-regression-data-pegu"
+        },
+        {
+          "name": "AWS_REGION",
+          "value": "eu-north-1"
+        },
+        {
           "name": "API_URL",
-          "value": "http://housing-api-alb-945997111.eu-west-2.elb.amazonaws.com/predict"
+          "value": "http://REPLACE_WITH_YOUR_ALB_DNS/predict"
         }
-      ]
+      ],
+      "logConfiguration": {
+        "logDriver": "awslogs",
+        "options": {
+          "awslogs-group": "/ecs/housing-streamlit",
+          "awslogs-region": "eu-north-1",
+          "awslogs-stream-prefix": "ecs"
+        }
+      }
     }
   ]
 }
