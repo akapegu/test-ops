@@ -78,6 +78,8 @@ def predict(
     model = load(model_path)
     feature_cols = list(model.feature_names_in_)
     df = df.reindex(columns=feature_cols, fill_value=0)
+    # JSON nulls can create object-dtype columns; XGBoost requires numeric
+    df = df.apply(pd.to_numeric, errors="coerce")
 
     # Step 6: Predict
     preds = model.predict(df)
